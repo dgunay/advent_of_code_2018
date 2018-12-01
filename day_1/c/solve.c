@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int solve(char* filename) {
+int solve(const char* filename) {
   // open filename
   FILE *fp = fopen(filename, "r");
   if (fp == NULL) {
@@ -17,13 +17,17 @@ int solve(char* filename) {
 
   char line[200];
   while (fgets(line, 200, fp)) {
-    // match integer and operations
+    // Get our operation
     char op = line[0];
 
-    // convert str to int 
-    int number = atoi(line[1]);
+    // convert str to int
+    int number = (int) strtol(
+      (const char*) &line[1], // use the address where the digits start 
+      NULL,                   // don't care about where it ends
+      0                       // don't care about base
+    );
 
-    // apply operation
+    // apply the operation
     if (op == '+') {
       result += number;
     }
