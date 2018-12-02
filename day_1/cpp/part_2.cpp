@@ -1,26 +1,41 @@
 /**
  * Starting from 0, execute all the math operations. 
- * Which is the first total number that we see twice?
+ * Which is the first freq number that we see twice?
  */
 
 #include <iostream>
 #include <fstream>
-#include <unordered_map>
+#include <unordered_set>
 #include <string>
+#include <vector>
 
 using std::ifstream;
 using std::cerr;
 
-int num_lines_in_file(ifstream& fin) {
-  int num_lines = 0;
-  while (fin.good()) {
-    char c = fin.get();
-    if (c == '\n') { num_lines++; }
+typedef char operation;
+typedef int frequency;
+
+std::vector<std::pair<operation, int>> file_to_array_of_pairs(ifstream& fin) {
+  std::vector<std::pair<operation, int>> pairs;
+
+  while (!fin.eof()) {
+    std::string line;
+    std::getline(fin, line);
+
+    if (line.size() == 0) {
+      break;
+    }
+
+    operation op = line[0];
+
+    int number = std::stoi(line.substr(1));
+
+    pairs.push_back(std::make_pair(op, number));    
   }
 
   fin.clear();
   fin.seekg(0);
-  return num_lines;
+  return pairs;
 }
 
 int solve(const char* filename) {
@@ -33,42 +48,30 @@ int solve(const char* filename) {
     exit(0);
   }
 
-  // int size_of_nums_encountered = num_lines_in_file(fin);
-  std::unordered_map<int, int> nums_encountered;
+  // Load the operations and numbers into memory
+  auto operation_num_pairs = file_to_array_of_pairs(fin);
+  fin.close();
 
-  int total = 0;
-  nums_encountered[0]++;
-  std::string line;
+  std::unordered_set<frequency> freqs_encountered;
+
+  frequency freq = 0;
+  freqs_encountered.insert(freq);
   while (true) {
-    while (!fin.eof()) {
-      std::getline(fin, line);
+    for (auto pair : operation_num_pairs) {
+      operation op = pair.first;
+      int number   = pair.second;
 
-      // Get our operation
-      char op = line[0];
-
-      // convert str to int
-      int number = std::stoi(line.substr(1, std::string::npos));
-      
       // apply the operation
-      if (op == '+') {
-        total += number;
-      }
-      else {
-        total -= number;
+      op == '+' ? freq += number : freq -= number;
+      
+      // Have we seen this frequency before?
+      if (freqs_encountered.find(freq) != freqs_encountered.end()) {
+        return freq;
       }
 
-      // Record that we witnessed this point of the running total.
-      if (nums_encountered.find(total) != nums_encountered.end()) {
-          return nums_encountered[total];
-      } 
-      else {
-        nums_encountered[total] = 1;
-      }
+      freqs_encountered.insert(freq);
     }
-
     // Do it all over again!
-    fin.clear();
-    fin.seekg(0);
   }
 
   // This shouldn't happen.
@@ -81,7 +84,7 @@ int main(int argc, char const *argv[])
 {
   int answer = solve(argv[1]);
 
-  printf("%d", answer);
+  std::cout << answer << '\n';
 
   return 0;
 }
