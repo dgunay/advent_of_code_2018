@@ -4,16 +4,20 @@ class Guard {
 	protected $asleep_time = 0;
 	protected $asleep = false;
 	protected $id;
-	protected $sleep_minute_ranges = [];
+	protected $mins_slept_counters = [];
 
-	public function __construct(string $id) { $this->id = $id; }
+	public function __construct(string $id) { 
+		$this->id = $id;
+		$this->mins_slept_counters = array_fill_keys(range(0, 59), 0);
+	}
 
 	// getters
 	public function id()            : string { return $this->id;           }
 	public function mins_asleep()   : int    { return $this->asleep_time;  }
 	public function is_awake()      : bool   { return $this->asleep;       }
-	public function sleep_minute_ranges() : array  { 
-		return $this->sleep_minute_ranges; 
+	public function is_asleep()     : bool   { return !$this->asleep;       }
+	public function mins_slept_counters() : array  { 
+		return $this->mins_slept_counters; 
 	}
 
 	// setters
@@ -24,15 +28,23 @@ class Guard {
 		$diff = $from->diff($to);
 		$this->asleep_time += $diff->i;
 
-		$this->sleep_minute_ranges[] = [$from, $to];
+		$tot_mins_asleep = $diff->i;
+		$starting_min = $from->format('i');
+
+		// Start from the minute of from
+		// increment the counters, modulo-ing by 60
+		$current_min = $starting_min;
+		for ($i = 0 ; $i < $tot_mins_asleep ; $i++, $current_min++) {
+			$this->mins_slept_counters[$current_min % 60]++;
+		}
 	}
 
 	private function most_common_minute_asleep() {
-		/*
-			For every range of sleeps
-				Get minute begin, and minute end
-				
-		*/
+		// Just increment the counter for each minute
+		$minutes_slept_during = array_fill_keys(range(0,59), 0);
+		foreach ($this->mins_slept_counters() as $range) {
+
+		}
 	}
 };
 
@@ -45,7 +57,9 @@ $mins_asleep = 0;
 foreach ($lines as $line) {
 	$time = parse_time($line);
 
-	if ($current_guard && !$current_guard->is_awake()) {
+	if ($current_guard && $current_guard->is_asleep()) {
+		// TODO: also, is it between 00:00 and 01:00?
+		// if ()
 		// Add the difference in times to this guard's asleep mins
 		$current_guard->sleep_for($time, $last_time);
 	}
@@ -79,9 +93,18 @@ foreach ($guards as $guard) {
 }
 
 // What minute of the hour was he asleep the most?
-foreach ($sleepiest_guard->times_asleep() as $sleep_interval) {
-
+$most_common_minute_asleep = 0;
+$highest_sleep_time = 0;
+foreach ($sleepiest_guard->mins_slept_counters() as $time => $times_asleep) {
+	if ($times_asleep > $highest_sleep_time) {
+		$most_common_minute_asleep = $time;
+	}
 }
+
+echo $most_common_minute_asleep . PHP_EOL;
+echo $sleepiest_guard->id();
+exit;
+echo ($most_common_minute_asleep * $sleepiest_guard->id());
 
 
 
